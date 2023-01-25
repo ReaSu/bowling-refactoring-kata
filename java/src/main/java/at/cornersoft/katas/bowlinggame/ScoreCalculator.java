@@ -1,11 +1,20 @@
 package at.cornersoft.katas.bowlinggame;
 
 public class ScoreCalculator {
+    private SpareCalculator spareCalculator;
+    private StrikeCalculator strikeCalculator;
+    private DigitCalculator digitCalculator;
+
     public int calculate(String scoreCard) {
+        spareCalculator = new SpareCalculator(scoreCard);
+        strikeCalculator = new StrikeCalculator(scoreCard);
+        digitCalculator = new DigitCalculator(scoreCard);
         return calculatePosition(scoreCard, 0, 0);
     }
 
     public int calculatePosition(String scoreCard, int currentPosition, int currentSum) {
+// scoreCard object that handles this
+// and will also know if we are in the 10th frame
         long xCount = scoreCard.chars().filter(ch -> ch == 'X').count();
         if (scoreCard.endsWith("X")) {
             xCount -= 1;
@@ -18,35 +27,16 @@ public class ScoreCalculator {
             return currentSum;
         }
 
-        if (scoreCard.charAt(currentPosition) == '-') {
-            return calculatePosition(scoreCard, currentPosition + 1, currentSum);
-        } else if (scoreCard.charAt(currentPosition) == '/') {
-            currentSum += 10;
-            if (currentPosition < scoreCard.length() - 1) {
-                if (scoreCard.charAt(currentPosition + 1) == '/' || scoreCard.charAt(currentPosition + 1) == 'X') {
-                    currentSum += 10;
-                } else {
-                    currentSum += Integer.parseInt("" + scoreCard.charAt(currentPosition + 1));
-                }
-            }
-            return calculatePosition(scoreCard, currentPosition + 1, currentSum);
+// 1) Factory to create correct calculator?
+// 2) all calculators are called,
+// but only the correct one returns a number, the others are multiplied by zero
+        if (scoreCard.charAt(currentPosition) == '/') {
+            currentSum += spareCalculator.calculate(currentPosition);
         } else if (scoreCard.charAt(currentPosition) == 'X') {
-            currentSum += 10;
-            if (currentPosition < scoreCard.length() - 1) {
-                currentSum += ((scoreCard.charAt(currentPosition + 1) == '/' || scoreCard.charAt(currentPosition + 1) == 'X')) ? 10 : Integer.parseInt("" + scoreCard.charAt(currentPosition + 1));
-            }
-            if (currentPosition < scoreCard.length() - 2) {
-                currentSum += ((scoreCard.charAt(currentPosition + 2) == '/' || scoreCard.charAt(currentPosition + 2) == 'X')) ? 10 : Integer.parseInt("" + scoreCard.charAt(currentPosition + 2));
-            }
-            return calculatePosition(scoreCard, currentPosition+1, currentSum);
+            currentSum += strikeCalculator.calculate(currentPosition);
         } else {
-            try {
-                currentSum += Integer.parseInt("" + scoreCard.charAt(currentPosition));
-                return calculatePosition(scoreCard, currentPosition+1, currentSum);
-            } catch (Exception ignore) {
-                //we do not check for errors in scorecard
-                return currentSum;
-            }
+            currentSum += digitCalculator.calculate(currentPosition);
         }
+        return calculatePosition(scoreCard, currentPosition+1, currentSum);
     }
 }
